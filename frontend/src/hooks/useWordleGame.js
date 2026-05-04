@@ -86,7 +86,10 @@ export function useWordleGame() {
     }
   }, [status, submitting, rows, currentRow, gameId, setLetters]);
 
-    const letterStatus = {};
+  // Aggregate per-letter status across all submitted rows.
+  // Priority: correct > present > absent (a letter never downgrades, e.g. once
+  // a letter is green it stays green even if a later guess uses it in a wrong spot).
+  const letterStatus = {};
   const priority = { absent: 0, present: 1, correct: 2 };
   for (const row of rows) {
     if (!row.feedback) continue;
@@ -99,5 +102,15 @@ export function useWordleGame() {
     }
   }
 
-  return { rows, currentRow, status, answer, error, submitting, handleKey, restart };
+  return {
+    rows,
+    currentRow,
+    status,
+    answer,
+    error,
+    submitting,
+    handleKey,
+    restart,
+    letterStatus,
+  };
 }
