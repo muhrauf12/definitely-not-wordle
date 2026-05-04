@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import Header from './components/Header';
 import Board from './components/Board';
 import Keyboard from './components/Keyboard';
+import GameOverModal from './components/GameOverModal';
 import { useWordleGame } from './hooks/useWordleGame';
 
 export default function App() {
@@ -34,6 +35,13 @@ export default function App() {
           <Keyboard onKey={game.handleKey} letterStatus={game.letterStatus} />
         </div>
       </main>
+      {(game.status === 'won' || game.status === 'lost') && (
+        <GameOverModal
+          status={game.status}
+          answer={game.answer}
+          onPlayAgain={game.restart}
+        />
+      )}
     </div>
   );
 }
