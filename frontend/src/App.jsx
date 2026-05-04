@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import Header from './components/Header';
 import Board from './components/Board';
+import Keyboard from './components/Keyboard';
 import { useWordleGame } from './hooks/useWordleGame';
 
 export default function App() {
@@ -29,6 +30,9 @@ export default function App() {
           </div>
         )}
         <Board rows={game.rows} />
+        <div className="mt-auto w-full">
+          <Keyboard onKey={game.handleKey} letterStatus={game.letterStatus} />
+        </div>
       </main>
     </div>
   );
