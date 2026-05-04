@@ -2,6 +2,7 @@ import express from 'express';
 import { randomUUID } from 'crypto';
 import { getRandomAnswer } from '../data/words.js';
 import { evaluateGuess } from '../lib/evaluate.js';
+import { isRealWord } from '../lib/validateWord.js';
 
 export const MAX_GUESSES = 6;
 export const WORD_LENGTH = 5;
@@ -27,7 +28,7 @@ router.post('/games', (req, res) => {
   });
 });
 
-router.post('/games/:id/guess', (req, res) => {
+router.post('/games/:id/guess', async (req, res) => {
   const game = games.get(req.params.id);
   if (!game) return res.status(404).json({ error: 'Game not found' });
   if (game.status !== 'playing') {
@@ -43,6 +44,12 @@ router.post('/games/:id/guess', (req, res) => {
   }
 
   const normalized = guess.toUpperCase();
+
+  // Always allow the actual answer through even if the dictionary doesn't know it.
+  if (normalized !== game.answer && !(await isRealWord(normalized))) {
+    return res.status(400).json({ error: 'Not a valid word' });
+  }
+
   const feedback = evaluateGuess(normalized, game.answer);
   game.guesses.push({ guess: normalized, feedback });
 
