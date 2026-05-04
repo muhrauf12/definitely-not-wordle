@@ -1,27 +1,29 @@
 import { useCallback, useEffect, useState } from 'react';
-import { MAX_GUESSES, WORD_LENGTH } from '../utils/constants';
+import { MAX_GUESSES, DEFAULT_WORD_LENGTH } from '../utils/constants';
 import { startNewGame, submitGuess } from '../api';
 
 const emptyRows = () =>
   Array.from({ length: MAX_GUESSES }, () => ({ letters: '', feedback: null }));
 
 export function useWordleGame() {
+  const [wordLength, setWordLengthState] = useState(DEFAULT_WORD_LENGTH);
   const [gameId, setGameId] = useState(null);
-  const [rows, setRows] = useState(emptyRows());
+  const [rows, setRows] = useState(emptyRows);
   const [currentRow, setCurrentRow] = useState(0);
-  const [status, setStatus] = useState('loading'); // loading | playing | won | lost | error
+  const [status, setStatus] = useState('loading');
   const [answer, setAnswer] = useState(null);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const restart = useCallback(async () => {
+  // Internal: starts a fresh game at the given length.
+  const startGame = useCallback(async (length) => {
     setStatus('loading');
     setError(null);
     setAnswer(null);
     setRows(emptyRows());
     setCurrentRow(0);
     try {
-      const game = await startNewGame();
+      const game = await startNewGame(length);
       setGameId(game.gameId);
       setStatus('playing');
     } catch (e) {
@@ -30,7 +32,25 @@ export function useWordleGame() {
     }
   }, []);
 
-  useEffect(() => { restart(); }, [restart]);
+  // Initial load only — subsequent restarts go through restart() / setWordLength().
+  useEffect(() => {
+    startGame(DEFAULT_WORD_LENGTH);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const restart = useCallback(
+    () => startGame(wordLength),
+    [startGame, wordLength],
+  );
+
+  const setWordLength = useCallback(
+    (length) => {
+      if (length === wordLength) return;
+      setWordLengthState(length);
+      startGame(length);
+    },
+    [wordLength, startGame],
+  );
 
   const setLetters = useCallback((letters) => {
     setRows((prev) => {
@@ -51,7 +71,7 @@ export function useWordleGame() {
     if (!current) return;
 
     if (key === 'ENTER') {
-      if (current.letters.length !== WORD_LENGTH) {
+      if (current.letters.length !== wordLength) {
         flashError('Not enough letters');
         return;
       }
@@ -81,14 +101,13 @@ export function useWordleGame() {
       return;
     }
 
-    if (/^[A-Z]$/.test(key) && current.letters.length < WORD_LENGTH) {
+    if (/^[A-Z]$/.test(key) && current.letters.length < wordLength) {
       setLetters(current.letters + key);
     }
-  }, [status, submitting, rows, currentRow, gameId, setLetters]);
+  }, [status, submitting, rows, currentRow, gameId, wordLength, setLetters]);
 
   // Aggregate per-letter status across all submitted rows.
-  // Priority: correct > present > absent (a letter never downgrades, e.g. once
-  // a letter is green it stays green even if a later guess uses it in a wrong spot).
+  // Priority: correct > present > absent (a letter never downgrades).
   const letterStatus = {};
   const priority = { absent: 0, present: 1, correct: 2 };
   for (const row of rows) {
@@ -103,6 +122,8 @@ export function useWordleGame() {
   }
 
   return {
+    wordLength,
+    setWordLength,
     rows,
     currentRow,
     status,

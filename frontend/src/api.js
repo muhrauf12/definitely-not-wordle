@@ -10,7 +10,11 @@ async function request(path, options = {}) {
   return body;
 }
 
-export const startNewGame = () => request('/games', { method: 'POST' });
+export const startNewGame = (wordLength) =>
+  request('/games', {
+    method: 'POST',
+    body: JSON.stringify({ wordLength }),
+  });
 
 export const submitGuess = (gameId, guess) =>
   request(`/games/${gameId}/guess`, {

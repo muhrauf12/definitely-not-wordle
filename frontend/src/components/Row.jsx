@@ -1,9 +1,8 @@
 import Tile from './Tile';
-import { WORD_LENGTH } from '../utils/constants';
 
-export default function Row({ letters = '', feedback = null }) {
+export default function Row({ letters = '', feedback = null, wordLength }) {
   const tiles = [];
-  for (let i = 0; i < WORD_LENGTH; i++) {
+  for (let i = 0; i < wordLength; i++) {
     tiles.push(
       <Tile
         key={i}

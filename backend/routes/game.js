@@ -5,18 +5,26 @@ import { evaluateGuess } from '../lib/evaluate.js';
 import { isRealWord } from '../lib/validateWord.js';
 
 export const MAX_GUESSES = 6;
-export const WORD_LENGTH = 5;
+export const VALID_LENGTHS = [4, 5, 6, 7];
+export const DEFAULT_LENGTH = 5;
 
-// In-memory game store. Fine for an intern project; swap for Redis later.
 const games = new Map();
 
 const router = express.Router();
 
 router.post('/games', (req, res) => {
+  const { wordLength = DEFAULT_LENGTH } = req.body ?? {};
+  if (!VALID_LENGTHS.includes(wordLength)) {
+    return res.status(400).json({
+      error: `Word length must be one of: ${VALID_LENGTHS.join(', ')}`,
+    });
+  }
+
   const id = randomUUID();
   games.set(id, {
     id,
-    answer: getRandomAnswer(),
+    wordLength,
+    answer: getRandomAnswer(wordLength),
     guesses: [],
     status: 'playing',
     createdAt: Date.now(),
@@ -24,7 +32,7 @@ router.post('/games', (req, res) => {
   res.status(201).json({
     gameId: id,
     maxGuesses: MAX_GUESSES,
-    wordLength: WORD_LENGTH,
+    wordLength,
   });
 });
 
@@ -36,8 +44,10 @@ router.post('/games/:id/guess', async (req, res) => {
   }
 
   const { guess } = req.body ?? {};
-  if (typeof guess !== 'string' || guess.length !== WORD_LENGTH) {
-    return res.status(400).json({ error: 'Guess must be a 5-letter string' });
+  if (typeof guess !== 'string' || guess.length !== game.wordLength) {
+    return res.status(400).json({
+      error: `Guess must be a ${game.wordLength}-letter string`,
+    });
   }
   if (!/^[a-zA-Z]+$/.test(guess)) {
     return res.status(400).json({ error: 'Guess must contain only letters' });
@@ -45,7 +55,6 @@ router.post('/games/:id/guess', async (req, res) => {
 
   const normalized = guess.toUpperCase();
 
-  // Always allow the actual answer through even if the dictionary doesn't know it.
   if (normalized !== game.answer && !(await isRealWord(normalized))) {
     return res.status(400).json({ error: 'Not a valid word' });
   }
@@ -68,7 +77,6 @@ router.post('/games/:id/guess', async (req, res) => {
   });
 });
 
-// Per the spec: include a "get answer" endpoint that reveals the secret word.
 router.get('/games/:id/answer', (req, res) => {
   const game = games.get(req.params.id);
   if (!game) return res.status(404).json({ error: 'Game not found' });

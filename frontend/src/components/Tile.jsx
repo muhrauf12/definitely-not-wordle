@@ -13,7 +13,7 @@ export default function Tile({ letter, status }) {
 
   return (
     <div
-      className={`w-14 h-14 sm:w-16 sm:h-16 border-2 flex items-center justify-center text-2xl font-bold uppercase ${style}`}
+      className={`w-12 h-12 sm:w-14 sm:h-14 border-2 flex items-center justify-center text-xl sm:text-2xl font-bold uppercase ${style}`}
     >
       {letter}
     </div>
