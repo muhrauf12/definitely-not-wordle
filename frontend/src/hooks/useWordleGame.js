@@ -15,7 +15,6 @@ export function useWordleGame() {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Internal: starts a fresh game at the given length.
   const startGame = useCallback(async (length) => {
     setStatus('loading');
     setError(null);
@@ -32,10 +31,8 @@ export function useWordleGame() {
     }
   }, []);
 
-  // Initial load only — subsequent restarts go through restart() / setWordLength().
   useEffect(() => {
     startGame(DEFAULT_WORD_LENGTH);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const restart = useCallback(
@@ -106,8 +103,6 @@ export function useWordleGame() {
     }
   }, [status, submitting, rows, currentRow, gameId, wordLength, setLetters]);
 
-  // Aggregate per-letter status across all submitted rows.
-  // Priority: correct > present > absent (a letter never downgrades).
   const letterStatus = {};
   const priority = { absent: 0, present: 1, correct: 2 };
   for (const row of rows) {

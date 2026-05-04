@@ -25,23 +25,21 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="flex-1 flex flex-col md:flex-row">
+      <div className="flex-1 relative flex flex-col items-center px-4 py-4">
         <Sidebar
           wordLength={game.wordLength}
           onWordLengthChange={game.setWordLength}
           disabled={game.submitting || game.status === 'loading'}
         />
-        <main className="flex-1 flex flex-col items-center px-4 py-4">
-          {game.error && (
-            <div className="bg-red-600 text-white px-3 py-2 rounded text-sm mb-2">
-              {game.error}
-            </div>
-          )}
-          <Board rows={game.rows} wordLength={game.wordLength} />
-          <div className="mt-auto w-full">
-            <Keyboard onKey={game.handleKey} letterStatus={game.letterStatus} />
+        {game.error && (
+          <div className="bg-red-600 text-white px-3 py-2 rounded text-sm mb-2">
+            {game.error}
           </div>
-        </main>
+        )}
+        <Board rows={game.rows} wordLength={game.wordLength} />
+        <div className="mt-auto w-full max-w-lg">
+          <Keyboard onKey={game.handleKey} letterStatus={game.letterStatus} />
+        </div>
       </div>
       {(game.status === 'won' || game.status === 'lost') && (
         <GameOverModal
